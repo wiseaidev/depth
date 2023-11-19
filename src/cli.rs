@@ -12,6 +12,6 @@ pub struct Cli {
     #[arg(short = 'c', long = "crate")]
     pub crate_: String,
     /// Sets the levels to display.
-    #[arg(short = 'l', long = "levels", default_value_t = 2)]
+    #[arg(short = 'l', long = "levels", default_value_t = 1)]
     pub levels: usize,
 }

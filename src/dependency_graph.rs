@@ -12,16 +12,21 @@
 //! 1. Import the necessary types and functions into your code:
 //!
 //! ```rust
-//! use depth::dependency_graph::{DependencyGraph, fetch_package_info, Package};
+//! use depth::package::{fetch_package_info, Package};
+//! use depth::dependency_graph::DependencyGraph;
 //! use crates_io_api::SyncClient;
 //! ```
 //!
 //! 2. Create an instance of `DependencyGraph` and use it to fetch and visualize dependency trees:
 //!
 //! ```rust
+//! use depth::dependency_graph::DependencyGraph;
+//! use depth::package::Package;
+//!
+//! let package = Package::new("".to_string(), "".to_string(), vec![("name".to_string(), "version".to_string())], false);
 //! let mut graph = DependencyGraph::new();
 //! graph.fetch_dependency_tree("your_package_name", 2);
-//! graph.print_dependencies_at_level(/* ... */);
+//! graph.print_dependencies_at_level(&package, 0, 2);
 //! ```
 //!
 //! # Key Features
@@ -39,6 +44,8 @@
 //! Use the `fetch_dependency_tree` method to fetch and build the dependency tree for a specific package:
 //!
 //! ```rust
+//! use depth::dependency_graph::DependencyGraph;
+//!
 //! let mut graph = DependencyGraph::new();
 //! graph.fetch_dependency_tree("your_package_name", 2);
 //! ```
@@ -48,14 +55,19 @@
 //! Utilize the `print_dependencies_at_level` method to print dependencies at a specified depth in the dependency tree:
 //!
 //! ```rust
-//! let package = Package::new(/* ... */);
+//! use depth::package::{fetch_package_info, Package};
+//! use depth::dependency_graph::DependencyGraph;
+//!
+//! let package = Package::new("".to_string(), "".to_string(), vec![("name".to_string(), "version".to_string())], false);
+//! let mut graph = DependencyGraph::new();
 //! graph.print_dependencies_at_level(&package, 0, 2);
 //! ```
 //!
 //! # Examples
 //!
 //! ```rust
-//! use depth::dependency_graph::{DependencyGraph, Package};
+//! use depth::package::Package;
+//! use depth::dependency_graph::DependencyGraph;
 //! use crates_io_api::SyncClient;
 //!
 //! let mut graph = DependencyGraph::new();
@@ -67,7 +79,8 @@ use crate::package::{fetch_package_info, Package};
 use crates_io_api::SyncClient;
 use petgraph::dot::{Config, Dot};
 use petgraph::graph::{DiGraph, NodeIndex};
-use std::collections::HashMap;
+use petgraph::visit::Dfs;
+use std::collections::{HashMap, HashSet};
 
 /// A struct representing a dependency graph.
 #[derive(Debug)]
@@ -141,7 +154,8 @@ impl DependencyGraph {
                 .node_indices()
                 .any(|i| self.graph[i] == *dependency)
             {
-                self.graph.add_node(dependency.clone());
+                let index = self.graph.add_node(dependency.clone());
+                self.add_dependency_edge(node_index, index);
             }
         }
 
@@ -166,30 +180,85 @@ impl DependencyGraph {
     /// * `depth` - The current depth in the dependency tree.
     /// * `max_depth` - The maximum depth to print dependencies.
     pub fn print_dependencies_at_level(&self, package: &Package, depth: usize, max_depth: usize) {
+        let mut visited_nodes = HashSet::new();
+        let mut printed_packages = HashSet::new();
+        self.print_dependencies_recursive(
+            package,
+            depth,
+            max_depth,
+            &mut visited_nodes,
+            &mut printed_packages,
+        );
+    }
+
+    /// Recursively prints the dependencies of a given package in a tree-like structure,
+    /// with optional depth limit and color-coded output.
+    ///
+    /// # Arguments
+    ///
+    /// - `self`: A reference to the DependencyGraph struct containing the dependency graph.
+    /// - `package`: A reference to the Package for which dependencies are printed.
+    /// - `depth`: The current depth in the recursion. Used for indentation and color-coding.
+    /// - `max_depth`: The maximum depth to explore in the dependency tree. Set to 0 for unlimited depth.
+    /// - `visited_nodes`: A HashSet to keep track of visited nodes to avoid duplicates in the output.
+    /// - `printed_packages`: A HashSet to keep track of printed packages to avoid redundant output.
+    ///
+    /// # Notes
+    ///
+    /// The function uses a Depth-First Search (DFS) traversal to explore the dependency graph.
+    /// The DFS algorithm is chosen for its simplicity and suitability for exploring tree-like structures.
+    /// The ANSI escape codes are used for color-coding the output based on the depth.
+    ///
+    /// - Green (32) is used for even depths.
+    /// - White (37) is used for odd depths.
+    pub fn print_dependencies_recursive(
+        &self,
+        package: &Package,
+        depth: usize,
+        max_depth: usize,
+        visited_nodes: &mut HashSet<NodeIndex>,
+        printed_packages: &mut HashSet<String>,
+    ) {
         if depth < max_depth {
-            println!(
-                "{:indent$} ├── {} - ({})",
-                "",
-                package.name,
-                package.url,
-                indent = depth * 2
-            );
+            let node_index = self
+                .graph
+                .node_indices()
+                .find(|&index| self.graph[index] == (package.name.clone(), package.url.clone()))
+                .unwrap_or_else(NodeIndex::end);
 
-            for dependency in &package.dependencies {
-                let child_index = self
-                    .graph
-                    .node_indices()
-                    .find(|&index| &self.graph[index] == dependency)
-                    .unwrap_or_else(NodeIndex::end);
+            if node_index != NodeIndex::end() && visited_nodes.insert(node_index) {
+                let package_key = &package.name;
+                if printed_packages.insert(package_key.clone()) || max_depth > 2 {
+                    // ANSI escape code based on depth
+                    // Green or white
+                    let color_code = if depth % 2 == 0 { 32 } else { 37 };
 
-                if child_index != NodeIndex::end() {
-                    let child_package = Package::new(
-                        self.graph[child_index].clone().0,
-                        self.graph[child_index].clone().1,
-                        vec![("".to_string(), "".to_string())],
-                        false,
+                    println!(
+                        "{:indent$}\x1b[{}m ├── {} - ({})\x1b[0m",
+                        "",
+                        color_code,
+                        package.name,
+                        package.url,
+                        indent = depth * 3
                     );
-                    self.print_dependencies_at_level(&child_package, depth + 1, max_depth);
+
+                    let mut dfs = Dfs::new(&self.graph, node_index);
+                    // dfs traversal
+                    while let Some(neighbor_index) = dfs.next(&self.graph) {
+                        let neighbor_package = Package::new(
+                            self.graph[neighbor_index].clone().0,
+                            self.graph[neighbor_index].clone().1,
+                            vec![("".to_string(), "".to_string())],
+                            false,
+                        );
+                        self.print_dependencies_recursive(
+                            &neighbor_package,
+                            depth + 1,
+                            max_depth,
+                            visited_nodes,
+                            printed_packages,
+                        );
+                    }
                 }
             }
         }

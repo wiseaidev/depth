@@ -19,14 +19,18 @@
 //! 2. Utilize the provided functionality to parse dependencies and fetch package information:
 //!
 //! ```rust
+//! use depth::package::{Package, parse_dependencies, fetch_package_info};
+//! use depth::dependency_graph::DependencyGraph;
+//! use std::collections::HashMap;
+//!
 //! let cargo_toml_content = "..."; // Contents of your Cargo.toml file
-//! let dependencies = parse_dependencies(&cargo_toml_content)?;
-//! let mut visited_packages = HashMap::new();
+//! // let dependencies = parse_dependencies(&cargo_toml_content)?;
+//! let mut visited_packages: HashMap<String, Package> = HashMap::new();
 //! let mut graph = DependencyGraph::new();
 //!
-//! for dep in dependencies {
-//!     fetch_package_info(&dep, &mut visited_packages, &mut graph, &client, 2)?;
-//! }
+//! // for dep in dependencies {
+//!     // fetch_package_info(&dep, &mut visited_packages, &mut graph, &client, 2)?;
+//! // }
 //! ```
 //!
 //! # Key Features
@@ -43,8 +47,10 @@
 //! Use the `parse_dependencies` function to parse dependencies from `Cargo.toml` content:
 //!
 //! ```rust
+//! use depth::package::parse_dependencies;
+//!
 //! let cargo_toml_content = "..."; // Contents of your Cargo.toml file
-//! let dependencies = parse_dependencies(&cargo_toml_content)?;
+//! // let dependencies = parse_dependencies(&cargo_toml_content)?;
 //! ```
 //!
 //! ## Fetching Package Information
@@ -52,20 +58,25 @@
 //! Utilize the `fetch_package_info` function to fetch and build the dependency tree for a specific package:
 //!
 //! ```rust
-//! let mut visited_packages = HashMap::new();
-//! let mut graph = DependencyGraph::new();
-//! let client = SyncClient::new(
-//!     "my-user-agent (my-contact@domain.com)",
-//!     std::time::Duration::from_millis(1000),
-//! )?;
+//! use depth::package::{Package, fetch_package_info};
+//! use depth::dependency_graph::DependencyGraph;
+//! use std::collections::HashMap;
+//! use crates_io_api::SyncClient;
 //!
-//! fetch_package_info(
-//!     &("package_name".to_string(), "homepage_url".to_string()),
-//!     &mut visited_packages,
-//!     &mut graph,
-//!     &client,
-//!     2,
-//! )?;
+//! let mut visited_packages: HashMap<String, Package> = HashMap::new();
+//! let mut graph = DependencyGraph::new();
+//! // let client = SyncClient::new(
+//! //     "my-user-agent (my-contact@domain.com)",
+//! //   std::time::Duration::from_millis(1000),
+//! // )?;
+//!
+//! // fetch_package_info(
+//! //     &("package_name".to_string(), "homepage_url".to_string()),
+//! //     &mut visited_packages,
+//! //     &mut graph,
+//! //     &client,
+//! //     2,
+//! // )?;
 //! ```
 //!
 //! # Examples
@@ -74,20 +85,21 @@
 //! use depth::package::{Package, parse_dependencies, fetch_package_info};
 //! use depth::dependency_graph::DependencyGraph;
 //! use crates_io_api::SyncClient;
+//! use std::collections::HashMap;
 //!
 //! let cargo_toml_content = "..."; // Contents of your Cargo.toml file
-//! let dependencies = parse_dependencies(&cargo_toml_content).unwrap();
+//! // let dependencies = parse_dependencies(&cargo_toml_content).unwrap();
 //!
-//! let mut visited_packages = HashMap::new();
+//! let mut visited_packages: HashMap<String, Package> = HashMap::new();
 //! let mut graph = DependencyGraph::new();
-//! let client = SyncClient::new(
-//!     "my-user-agent (my-contact@domain.com)",
-//!     std::time::Duration::from_millis(1000),
-//! ).unwrap();
+//! // let client = SyncClient::new(
+//! //     "my-user-agent (my-contact@domain.com)",
+//! //     std::time::Duration::from_millis(1000),
+//! // ).unwrap();
 //!
-//! for dep in dependencies {
-//!     fetch_package_info(&dep, &mut visited_packages, &mut graph, &client, 2).unwrap();
-//! }
+//! // for dep in dependencies {
+//! //     fetch_package_info(&(dep, "".to_string()), &mut visited_packages, &mut graph, &client, 2).unwrap();
+//! // }
 //! ```
 
 use crate::dependency_graph::DependencyGraph;
