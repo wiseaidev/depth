@@ -244,7 +244,6 @@ fn list_dependencies(
         if !dep.optional && !optional {
             dependencies.push((dep.crate_id.clone(), dep.req.to_string()));
         } else if optional && dep.optional {
-            println!("{:?}", dep);
             dependencies.push((dep.crate_id.clone(), dep.req.to_string()));
         }
     }
