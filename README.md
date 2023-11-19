@@ -110,6 +110,13 @@ Dependencies for package 'input_yew':
        ├── tracing - (https://tokio.rs)
        ├── trybuild - ()
        ├── yew-macro - (https://github.com/yewstack/yew)
+
+$ depth -c input_yew -l 2 -o
+Dependencies for package 'input_yew':
+ ├── yew - (https://yew.rs)
+    ├── base64ct - (^1.6.0)
+    ├── bincode - (^1.3.3)
+    ├── html-escape - (^0.2.13)
 ```
 
 ## 🤝 Contributing
