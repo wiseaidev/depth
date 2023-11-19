@@ -3,7 +3,7 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(
     author = "Mahmoud Harmouch",
-    version = "0.0.2",
+    version = "0.0.3",
     about = "Visualize crate.io dependencies as a Tree",
     name = "Visualize Deps Tree"
 )]
