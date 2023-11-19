@@ -45,7 +45,6 @@ $ depth -c crate_name
 - **Multilevel Dependency Exploration**: Dive deeper into dependencies by supporting multilevel exploration, allowing you to inspect dependencies at various levels of depth.
 - **Dependency Version Information**: Display version information for each dependency, including the version used by the current package.
 
-Feel free to tailor these features based on the specific needs and goals of your Rust package management tool.
 ## 🌟 Examples
 
 ```bash
