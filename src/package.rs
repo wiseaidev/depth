@@ -168,6 +168,7 @@ pub fn parse_dependencies(
 /// * `graph` - A mutable reference to a DependencyGraph where package information will be stored.
 /// * `client` - A SyncClient instance for interacting with the Crates.io API.
 /// * `depth` - The depth up to which dependencies should be fetched and added to the graph.
+/// * `optional` - A boolean to scan optional dependencies only.
 ///
 /// # Returns
 ///
@@ -178,6 +179,7 @@ pub fn fetch_package_info(
     graph: &mut DependencyGraph,
     client: &SyncClient,
     depth: usize,
+    optional: bool,
 ) -> Result<Option<Package>, Box<dyn Error>> {
     if let Some(package) = visited_packages.get(&package_name.0) {
         return Ok(Some(package.clone()));
@@ -186,7 +188,7 @@ pub fn fetch_package_info(
     let crate_info = client.get_crate(&package_name.0)?.crate_data;
 
     let homepage = crate_info.clone().homepage.unwrap_or("".to_string());
-    let dependencies = list_dependencies(client, &crate_info)?;
+    let dependencies = list_dependencies(client, &crate_info, optional)?;
 
     let internal = package_name.0.starts_with("std");
 
@@ -203,9 +205,14 @@ pub fn fetch_package_info(
     // Add dependencies to the graph up to the specified depth
     if depth > 1 {
         for dependency in &dependencies {
-            if let Some(child_package) =
-                fetch_package_info(dependency, visited_packages, graph, client, depth - 1)?
-            {
+            if let Some(child_package) = fetch_package_info(
+                dependency,
+                visited_packages,
+                graph,
+                client,
+                depth - 1,
+                optional,
+            )? {
                 let child_index = graph.add_package_to_graph(&child_package);
                 graph.add_dependency_edge(node_index, child_index);
             }
@@ -221,6 +228,7 @@ pub fn fetch_package_info(
 ///
 /// * `client` - A SyncClient instance for interacting with the Crates.io API.
 /// * `crate_info` - A reference to the Crate information obtained from Crates.io.
+/// * `optional` - A boolean to scan optional dependencies only.
 ///
 /// # Returns
 ///
@@ -228,12 +236,15 @@ pub fn fetch_package_info(
 fn list_dependencies(
     client: &SyncClient,
     crate_info: &Crate,
+    optional: bool,
 ) -> Result<Vec<(String, String)>, CratesIoError> {
     let mut dependencies = Vec::new();
 
     for dep in client.crate_dependencies(&crate_info.id, &crate_info.max_version)? {
-        // Ignore optional dependencies.
-        if !dep.optional {
+        if !dep.optional && !optional {
+            dependencies.push((dep.crate_id.clone(), dep.req.to_string()));
+        } else if optional && dep.optional {
+            println!("{:?}", dep);
             dependencies.push((dep.crate_id.clone(), dep.req.to_string()));
         }
     }
