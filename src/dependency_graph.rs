@@ -25,7 +25,7 @@
 //!
 //! let package = Package::new("".to_string(), "".to_string(), vec![("name".to_string(), "version".to_string())], false);
 //! let mut graph = DependencyGraph::new();
-//! graph.fetch_dependency_tree("your_package_name", 2);
+//! graph.fetch_dependency_tree("your_package_name", 2, false);
 //! graph.print_dependencies_at_level(&package, 0, 2);
 //! ```
 //!
@@ -47,7 +47,7 @@
 //! use depth::dependency_graph::DependencyGraph;
 //!
 //! let mut graph = DependencyGraph::new();
-//! graph.fetch_dependency_tree("your_package_name", 2);
+//! graph.fetch_dependency_tree("your_package_name", 2, false);
 //! ```
 //!
 //! ## Visualizing Dependencies
@@ -71,7 +71,7 @@
 //! use crates_io_api::SyncClient;
 //!
 //! let mut graph = DependencyGraph::new();
-//! graph.fetch_dependency_tree("your_package_name", 2);
+//! graph.fetch_dependency_tree("your_package_name", 2, false);
 //! // Additional functionality with the dependency graph...
 //! ```
 
@@ -109,6 +109,7 @@ impl DependencyGraph {
     ///
     /// * `package_name` - The name of the package to fetch.
     /// * `depth` - The maximum depth to fetch dependencies.
+    /// * `optional` - A boolean to scan optional dependencies only.
     ///
     /// # Returns
     ///
@@ -118,6 +119,7 @@ impl DependencyGraph {
         &mut self,
         package_name: &str,
         depth: usize,
+        optional: bool,
     ) -> Result<Option<Package>, Box<dyn std::error::Error>> {
         let mut visited_packages = HashMap::new();
         let client = SyncClient::new(
@@ -131,6 +133,7 @@ impl DependencyGraph {
             self,
             &client,
             depth,
+            optional,
         )
     }
 

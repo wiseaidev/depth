@@ -61,10 +61,14 @@ use dependency_graph::DependencyGraph;
 /// # Returns
 ///
 /// A Result indicating success or an error if the visualization process fails.
-pub fn visualize_dependency_tree(package_name: &str, depth: usize) -> Result<(), Box<dyn Error>> {
+pub fn visualize_dependency_tree(
+    package_name: &str,
+    depth: usize,
+    optional: bool,
+) -> Result<(), Box<dyn Error>> {
     let mut graph = DependencyGraph::new();
 
-    if let Some(root_package) = graph.fetch_dependency_tree(package_name, depth)? {
+    if let Some(root_package) = graph.fetch_dependency_tree(package_name, depth, optional)? {
         // Print dependencies
         println!("Dependencies for package '{}':", package_name);
         graph.print_dependencies_at_level(&root_package, 0, depth);
