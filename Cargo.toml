@@ -13,7 +13,7 @@ authors = ["Mahmoud Harmouch <oss@wiseai.dev>"]
 
 [dependencies]
 clap = { version = "4.4.8", features = ["derive"] }
-crates_io_api = "0.8.2"
+crates_io_api = "0.9.0"
 petgraph = "0.6.4"
 serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1.0.108"
